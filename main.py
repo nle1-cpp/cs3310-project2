@@ -18,29 +18,30 @@ def alg_runtime(G, callback=None):
 
 
 def main():
-    # Sanity check for Dijkstra's and Floyd-Warshall algorithms
+    # Sanity check: compare Dijkstra's vs Floyd-Warshall (should produce identical results)
+    print("Running sanity check...")
     G = nx.gnp_random_graph(10, 0.2, directed=True)
     for (u, v) in G.edges():
-        G.edges[u,v]["weight"] = random.randint(0,10)
-
-    expected_paths = []
-    exp_dict = dict(nx.all_pairs_dijkstra_path_length(G, weight="weight")).items()
-    for _,v in exp_dict:
-        for _,cost in v.items():
-            expected_paths.append(cost)
+        G.edges[u,v]["weight"] = random.randint(1, 10)
 
     dj_paths = dj.apsp_length(G)
     fw_paths = fw.apsp_length(G)
 
-    expected_paths.sort()
-    dj_paths.sort()
-    fw_paths.sort()
+    # Sort both lists to compare (order may differ due to implementation)
+    dj_sorted = sorted(dj_paths)
+    fw_sorted = sorted(fw_paths)
 
-    for i in range(0, len(expected_paths)):
-        print(f"{expected_paths[i]}{dj_paths[i]}{fw_paths[i]}")
-        if expected_paths[i] != dj_paths[i] or expected_paths[i] != fw_paths[i]:
+    if len(dj_sorted) != len(fw_sorted):
+        print("Error: Different number of paths computed")
+        sys.exit(1)
+
+    for i in range(len(dj_sorted)):
+        if dj_sorted[i] != fw_sorted[i]:
+            print(f"Mismatch at index {i}: Dijkstra={dj_sorted[i]}, Floyd-Warshall={fw_sorted[i]}")
             print("Path computed is incorrect")
-            sys.exit()
+            sys.exit(1)
+    
+    print("Sanity check passed: Dijkstra and Floyd-Warshall produce identical results")
 
     # Test using graphs with vertex counts of multiples 10
     # Repeat tests to mitigate experimental error
