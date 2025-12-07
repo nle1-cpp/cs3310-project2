@@ -2,7 +2,11 @@ import networkx as nx
 import random
 import time
 import sys
+
+# graphing library
 import pandas as pd
+import matplotlib.pyplot as plt
+
 import dijkstra as dj
 import floyd_warshall as fw
 
@@ -75,6 +79,21 @@ def main():
     print("\nRuntime results from runtime.csv:")
     df = pd.read_csv(OUTPUT)
     print(df)
+
+    # this part here is to plot the results on a graph
+    avg_df = df.groupby('#vertices').mean().reset_index()
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(avg_df['#vertices'], avg_df['dj'], marker='o', label='Dijkstra')
+    plt.plot(avg_df['#vertices'], avg_df['fw'], marker='o', label='Floyd-Warshall')
+
+    plt.title('APSP Algorithm Runtime Comparison')
+    plt.xlabel('Number of Vertices')
+    plt.ylabel('Average Runtime (seconds)')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
