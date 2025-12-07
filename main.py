@@ -30,7 +30,7 @@ def main():
             expected_paths.append(cost)
 
     dj_paths = dj.apsp_length(G)
-    fw_paths = dj.apsp_length(G)
+    fw_paths = fw.apsp_length(G)
 
     expected_paths.sort()
     dj_paths.sort()
@@ -55,10 +55,12 @@ def main():
             # Generate a random graph with NetworkX that has n nodes
             # and a probability of 50% of creating an edge between each node pair
             G = nx.gnp_random_graph(n, 0.5, directed=True)
+            for (u, v) in G.edges():
+                G.edges[u,v]["weight"] = random.randint(1, 10)
 
             # Write data to file
-            dj_time = alg_runtime(dj.apsp_length(G))
-            fw_time = alg_runtime(fw.apsp_length(G))
+            dj_time = alg_runtime(G, dj.apsp_length)
+            fw_time = alg_runtime(G, fw.apsp_length)
             f.write(f"{n},{dj_time},{fw_time}\n")
 
 if __name__=="__main__":
