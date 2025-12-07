@@ -1,54 +1,58 @@
 from heapq import heappush, heappop
-from numpy import inf
-import networkx as nx 
+from math import inf
+import networkx as nx
 
 def apsp_length(G: nx.DiGraph):
     paths_length = []
-    n = G.number_of_nodes()
-    for i in range(0,n):
-        for j in range(0,n):
+    nodes = list(G.nodes())
+    node_to_index = {node: i for i, node in enumerate(nodes)}
+    n = len(nodes)
+
+    for i in range(n):
+        for j in range(n):
             if i == j:
                 paths_length.append(0)
             else:
-                path = single_pair_path_length(G,i,j)
-                paths_length.append(path)
-
+                start = nodes[i]
+                target = nodes[j]
+                path_length = single_pair_path_length(G, start, target)
+                paths_length.append(path_length)
     return paths_length
 
-def single_pair_path_length(G: nx.DiGraph, start: int, target: int) -> float:
+def single_pair_path_length(G: nx.DiGraph, start, target) -> float:
     if start == target:
         return 0
 
-    n = G.number_of_nodes()
-    # adj[i] = {weight,prev,visited}
-    adj = [{"cost":inf, "prev":-1, "visited":False} for _ in range(n)]
+    nodes = list(G.nodes())
+    node_to_index = {node: i for i, node in enumerate(nodes)}
+    n = len(nodes)
+    adj = [{"cost": inf, "visited": False} for _ in range(n)]
+
+    start_idx = node_to_index[start]
+    adj[start_idx]["cost"] = 0
 
     pq = []
     heappush(pq, (0, start))
-    adj[start]["cost"] = 0
 
-    while len(pq) > 0:
+    while pq:
         cur_cost, cur = heappop(pq)
         if cur == target:
-            adj[target]["cost"] = cur_cost
-            break
+            return cur_cost
 
-        if adj[cur]["visited"]:
+        cur_idx = node_to_index[cur]
+        if adj[cur_idx]["visited"]:
             continue
 
-        adj[cur]["visited"] = True
+        adj[cur_idx]["visited"] = True
 
-        edges = G.out_edges(cur,data="weight")
-        for (u,v,w) in edges:
-            if adj[v]["visited"]:
-                continue
-            
-            neighbor_cost = w + adj[u]["cost"]
-            if neighbor_cost >= adj[v]["cost"]:
+        for (u, v, w) in G.out_edges(cur, data="weight"):
+            v_idx = node_to_index[v]
+            if adj[v_idx]["visited"]:
                 continue
 
-            adj[v]["cost"] = neighbor_cost
-            adj[v]["prev"] = u
-            heappush(pq, (neighbor_cost, v))
+            new_cost = cur_cost + w
+            if new_cost < adj[v_idx]["cost"]:
+                adj[v_idx]["cost"] = new_cost
+                heappush(pq, (new_cost, v))
 
-    return adj[target]["cost"]
+    return inf
