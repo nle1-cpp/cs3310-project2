@@ -1,58 +1,61 @@
+"""
+Dijkstra's Algorithm for All-Pairs Shortest Paths
+
+Library Usage (NetworkX - storage and traversal only):
+  - nx.DiGraph: Graph data structure
+  - G.number_of_nodes(): Get vertex count
+  - G.out_edges(u, data="weight"): Iterate outgoing edges with weights
+
+No library shortest-path algorithms are used.
+All shortest-path logic is implemented from scratch.
+"""
 from heapq import heappush, heappop
 from math import inf
 import networkx as nx
 
 def apsp_length(G: nx.DiGraph):
+    """
+    All-Pairs Shortest Paths using repeated single-source Dijkstra.
+    Runs Dijkstra V times (once from each source vertex).
+    Time complexity: O(V * E log V)
+    """
     paths_length = []
-    nodes = list(G.nodes())
-    node_to_index = {node: i for i, node in enumerate(nodes)}
-    n = len(nodes)
-
-    for i in range(n):
-        for j in range(n):
-            if i == j:
-                paths_length.append(0)
-            else:
-                start = nodes[i]
-                target = nodes[j]
-                path_length = single_pair_path_length(G, start, target)
-                paths_length.append(path_length)
+    n = G.number_of_nodes()
+    
+    # Run single-source Dijkstra from each vertex
+    for source in range(n):
+        distances = single_source_dijkstra(G, source)
+        paths_length.extend(distances)
+    
     return paths_length
 
-def single_pair_path_length(G: nx.DiGraph, start, target) -> float:
-    if start == target:
-        return 0
-
-    nodes = list(G.nodes())
-    node_to_index = {node: i for i, node in enumerate(nodes)}
-    n = len(nodes)
-    adj = [{"cost": inf, "visited": False} for _ in range(n)]
-
-    start_idx = node_to_index[start]
-    adj[start_idx]["cost"] = 0
-
-    pq = []
-    heappush(pq, (0, start))
-
+def single_source_dijkstra(G: nx.DiGraph, source: int) -> list:
+    """
+    Single-source Dijkstra: computes shortest paths from source to ALL vertices.
+    Time complexity: O(E log V)
+    """
+    n = G.number_of_nodes()
+    dist = [inf] * n
+    visited = [False] * n
+    
+    dist[source] = 0
+    pq = [(0, source)]  # (distance, vertex)
+    
     while pq:
-        cur_cost, cur = heappop(pq)
-        if cur == target:
-            return cur_cost
-
-        cur_idx = node_to_index[cur]
-        if adj[cur_idx]["visited"]:
+        cur_dist, u = heappop(pq)
+        
+        if visited[u]:
             continue
-
-        adj[cur_idx]["visited"] = True
-
-        for (u, v, w) in G.out_edges(cur, data="weight"):
-            v_idx = node_to_index[v]
-            if adj[v_idx]["visited"]:
+        visited[u] = True
+        
+        # Relax all outgoing edges from u
+        for (_, v, w) in G.out_edges(u, data="weight"):
+            if visited[v]:
                 continue
-
-            new_cost = cur_cost + w
-            if new_cost < adj[v_idx]["cost"]:
-                adj[v_idx]["cost"] = new_cost
-                heappush(pq, (new_cost, v))
-
-    return inf
+            
+            new_dist = cur_dist + w
+            if new_dist < dist[v]:
+                dist[v] = new_dist
+                heappush(pq, (new_dist, v))
+    
+    return dist

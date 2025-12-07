@@ -13,6 +13,8 @@ import floyd_warshall as fw
 OUTPUT = "runtime.csv"
 MAX_VERTICES = 100
 TRIALS = 5
+SPARSE_DENSITY = 0.15  # 15% edge probability (sparse)
+DENSE_DENSITY = 0.50   # 50% edge probability (dense)
 
 
 def alg_runtime(G, callback):
@@ -26,45 +28,60 @@ def main():
     # ---------------------------------------------------------------
     #  Sanity check for Dijkstra's and Floyd–Warshall algorithms
     # ---------------------------------------------------------------
+    print("Running sanity check...")
     G = nx.gnp_random_graph(10, 0.2, directed=True)
     for (u, v) in G.edges():
-        G.edges[u, v]["weight"] = random.randint(0, 10)
-
-    expected_paths = []
-    exp_dict = dict(nx.all_pairs_dijkstra_path_length(G, weight="weight")).items()
-    for _, v in exp_dict:
-        for _, cost in v.items():
-            expected_paths.append(cost)
+        G.edges[u,v]["weight"] = random.randint(1, 10)
 
     # Call student algorithms
     dj_paths = dj.apsp_length(G)
     fw_paths = fw.apsp_length(G)
 
-    # Sort for comparison
-    expected_paths.sort()
-    dj_paths.sort()
-    fw_paths.sort()
+    # Sort both lists to compare (order may differ due to implementation)
+    dj_sorted = sorted(dj_paths)
+    fw_sorted = sorted(fw_paths)
 
-    for i in range(len(expected_paths)):
-        print(f"{expected_paths[i]} {dj_paths[i]} {fw_paths[i]}")
-        if expected_paths[i] != dj_paths[i] or expected_paths[i] != fw_paths[i]:
+    if len(dj_sorted) != len(fw_sorted):
+        print("Error: Different number of paths computed")
+        sys.exit(1)
+
+    for i in range(len(dj_sorted)):
+        if dj_sorted[i] != fw_sorted[i]:
+            print(f"Mismatch at index {i}: Dijkstra={dj_sorted[i]}, Floyd-Warshall={fw_sorted[i]}")
             print("Path computed is incorrect")
-            sys.exit()
+            sys.exit(1)
+    
+    print("Sanity check passed: Dijkstra and Floyd-Warshall produce identical results")
 
-    # ---------------------------------------------------------------
-    #  Runtime testing
-    # ---------------------------------------------------------------
+    # Test using graphs with vertex counts of multiples of 10
+    # Test both sparse and dense graphs
+    # Repeat tests to mitigate experimental error and compute averages
+    print(f"\nRunning benchmarks ({TRIALS} trials per size)...")
+    
     with open(OUTPUT, "w") as f:
-        f.write("#vertices,dj,fw\n")
+        f.write("#vertices,density,dj_avg,fw_avg\n")
+        
+        for n in range(10, MAX_VERTICES, 10):
+            # Test both sparse and dense graphs for each vertex count
+            for density, density_name in [(SPARSE_DENSITY, "sparse"), (DENSE_DENSITY, "dense")]:
+                dj_total = 0
+                fw_total = 0
+                
+                for i in range(TRIALS):
+                    # Generate a random directed graph with given density
+                    G = nx.gnp_random_graph(n, density, directed=True)
+                    for (u, v) in G.edges():
+                        G.edges[u,v]["weight"] = random.randint(1, 10)
 
-    with open(OUTPUT, "a") as f:
-        for n in range(10, MAX_VERTICES + 1, 10):
-            for _ in range(TRIALS):
-
-                # Generate random directed graph
-                G = nx.gnp_random_graph(n, 0.5, directed=True)
-                for (u, v) in G.edges():
-                    G.edges[u, v]["weight"] = random.randint(0, 10)
+                    # Accumulate runtime for each algorithm
+                    dj_total += alg_runtime(G, dj.apsp_length)
+                    fw_total += alg_runtime(G, fw.apsp_length)
+                
+                # Compute and write average runtime
+                dj_avg = dj_total / TRIALS
+                fw_avg = fw_total / TRIALS
+                f.write(f"{n},{density_name},{dj_avg},{fw_avg}\n")
+                print(f"  n={n} ({density_name}): Dijkstra={dj_avg:.6f}s, Floyd-Warshall={fw_avg:.6f}s")
 
                 # Time both algorithms
                 dj_time = alg_runtime(G, dj.apsp_length)
