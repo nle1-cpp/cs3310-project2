@@ -3,7 +3,6 @@ import subprocess
 from pathlib import Path
 import venv
 import stat
-import sys
 import os
 
 is_windows = os.name == "nt"
