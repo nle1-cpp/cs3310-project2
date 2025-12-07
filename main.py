@@ -43,26 +43,33 @@ def main():
     
     print("Sanity check passed: Dijkstra and Floyd-Warshall produce identical results")
 
-    # Test using graphs with vertex counts of multiples 10
-    # Repeat tests to mitigate experimental error
-    with open(OUTPUT, "w") as f:
-        f.write("#vertices,")
+    # Test using graphs with vertex counts of multiples of 10
+    # Repeat tests to mitigate experimental error and compute averages
+    print(f"\nRunning benchmarks ({TRIALS} trials per size)...")
     
-    f = open(OUTPUT, "a")
-    f.write("dj,fw,\n")
+    with open(OUTPUT, "w") as f:
+        f.write("#vertices,dj_avg,fw_avg\n")
+        
+        for n in range(10, MAX_VERTICES, 10):
+            dj_total = 0
+            fw_total = 0
+            
+            for i in range(TRIALS):
+                # Generate a random graph with NetworkX that has n nodes
+                # and a probability of 50% of creating an edge between each node pair
+                G = nx.gnp_random_graph(n, 0.5, directed=True)
+                for (u, v) in G.edges():
+                    G.edges[u,v]["weight"] = random.randint(1, 10)
 
-    for n in range(10, MAX_VERTICES, 10):
-        for i in range(0, TRIALS):
-            # Generate a random graph with NetworkX that has n nodes
-            # and a probability of 50% of creating an edge between each node pair
-            G = nx.gnp_random_graph(n, 0.5, directed=True)
-            for (u, v) in G.edges():
-                G.edges[u,v]["weight"] = random.randint(1, 10)
-
-            # Write data to file
-            dj_time = alg_runtime(G, dj.apsp_length)
-            fw_time = alg_runtime(G, fw.apsp_length)
-            f.write(f"{n},{dj_time},{fw_time}\n")
+                # Accumulate runtime for each algorithm
+                dj_total += alg_runtime(G, dj.apsp_length)
+                fw_total += alg_runtime(G, fw.apsp_length)
+            
+            # Compute and write average runtime
+            dj_avg = dj_total / TRIALS
+            fw_avg = fw_total / TRIALS
+            f.write(f"{n},{dj_avg},{fw_avg}\n")
+            print(f"  n={n}: Dijkstra={dj_avg:.6f}s, Floyd-Warshall={fw_avg:.6f}s")
 
 if __name__=="__main__":
     main()
