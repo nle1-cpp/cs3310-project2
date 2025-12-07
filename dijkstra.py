@@ -1,3 +1,14 @@
+"""
+Dijkstra's Algorithm for All-Pairs Shortest Paths
+
+Library Usage (NetworkX - storage and traversal only):
+  - nx.DiGraph: Graph data structure
+  - G.number_of_nodes(): Get vertex count
+  - G.out_edges(u, data="weight"): Iterate outgoing edges with weights
+
+No library shortest-path algorithms are used.
+All shortest-path logic is implemented from scratch.
+"""
 from heapq import heappush, heappop
 from math import inf
 import networkx as nx 

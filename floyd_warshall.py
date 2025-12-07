@@ -1,3 +1,14 @@
+"""
+Floyd-Warshall Algorithm for All-Pairs Shortest Paths
+
+Library Usage (NetworkX - storage and traversal only):
+  - nx.DiGraph: Graph data structure
+  - G.number_of_nodes(): Get vertex count
+  - G.edges(data=True): Iterate all edges with weights
+
+No library shortest-path algorithms are used.
+All shortest-path logic is implemented from scratch.
+"""
 import networkx as nx
 from math import inf
 
