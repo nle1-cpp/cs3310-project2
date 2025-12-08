@@ -11,3 +11,4 @@ build/
 main.spec
 dist/
 apsp
+*.png

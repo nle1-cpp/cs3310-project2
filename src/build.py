@@ -8,7 +8,6 @@ def install():
     PyInstaller.__main__.run([
         path_to_main,
         '--onefile',
-        '--windowed',
         '--specpath', './build',
         '--workpath', './build',
         '--distpath', './',

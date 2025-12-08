@@ -59,13 +59,11 @@ def main():
     print(f"\nRunning benchmarks ({TRIALS} trials per size)...")
     
     with open(OUTPUT, "w") as f:
-        f.write("#vertices,density,dj_avg,fw_avg\n")
+        f.write("#vertices,density,dj,fw\n")
         
         for n in range(10, MAX_VERTICES, 10):
             # Test both sparse and dense graphs for each vertex count
             for density, density_name in [(SPARSE_DENSITY, "sparse"), (DENSE_DENSITY, "dense")]:
-                dj_total = 0
-                fw_total = 0
                 
                 for i in range(TRIALS):
                     # Generate a random directed graph with given density
@@ -73,22 +71,12 @@ def main():
                     for (u, v) in G.edges():
                         G.edges[u,v]["weight"] = random.randint(1, 10)
 
-                    # Accumulate runtime for each algorithm
-                    dj_total += alg_runtime(G, dj.apsp_length)
-                    fw_total += alg_runtime(G, fw.apsp_length)
-                
-                # Compute and write average runtime
-                dj_avg = dj_total / TRIALS
-                fw_avg = fw_total / TRIALS
-                f.write(f"{n},{density_name},{dj_avg},{fw_avg}\n")
-                print(f"  n={n} ({density_name}): Dijkstra={dj_avg:.6f}s, Floyd-Warshall={fw_avg:.6f}s")
+                    # Time both algorithms
+                    dj_time = alg_runtime(G, dj.apsp_length)
+                    fw_time = alg_runtime(G, fw.apsp_length)
 
-                # Time both algorithms
-                dj_time = alg_runtime(G, dj.apsp_length)
-                fw_time = alg_runtime(G, fw.apsp_length)
-
-                # Write results
-                f.write(f"{n},{dj_time},{fw_time}\n")
+                    # Write results
+                    f.write(f"{n},{density_name},{dj_time},{fw_time}\n")
 
     # ---------------------------------------------------------------
     #  Print out runtime.csv
@@ -98,7 +86,7 @@ def main():
     print(df)
 
     # this part here is to plot the results on a graph
-    avg_df = df.groupby('#vertices').mean().reset_index()
+    avg_df = df.groupby('#vertices')[['dj','fw']].mean().reset_index()
 
     plt.figure(figsize=(8, 5))
     plt.plot(avg_df['#vertices'], avg_df['dj'], marker='o', label='Dijkstra')
@@ -110,7 +98,7 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.savefig('plot.png', bbox_inches='tight')
 
 
 if __name__ == "__main__":
