@@ -15,6 +15,10 @@ import random
 import time
 import sys
 
+# graphing library 
+import pandas as pd 
+import matplotlib.pyplot as plt
+
 import dijkstra as dj
 import floyd_warshall as fw
 
@@ -97,6 +101,24 @@ def main():
                 fw_avg = fw_total / TRIALS
                 f.write(f"{n},{density_name},{dj_avg},{fw_avg}\n")
                 print(f"  n={n} ({density_name}): Dijkstra={dj_avg:.6f}s, Floyd-Warshall={fw_avg:.6f}s")
+
+    # this part here is to plot the results on a graph
+    df = pd.read_csv(OUTPUT)
+
+    # Average over densities for each vertex count
+    avg_df = df.groupby('#vertices')[['dj_avg', 'fw_avg']].mean().reset_index()
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(avg_df['#vertices'], avg_df['dj_avg'], marker='o', label='Dijkstra')
+    plt.plot(avg_df['#vertices'], avg_df['fw_avg'], marker='o', label='Floyd-Warshall')
+
+    plt.title('APSP Algorithm Runtime Comparison')
+    plt.xlabel('Number of Vertices')
+    plt.ylabel('Average Runtime (seconds)')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig('plot.png', bbox_inches='tight')
 
 if __name__=="__main__":
     main()
