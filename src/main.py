@@ -81,6 +81,9 @@ def main():
     # Test both sparse and dense graphs
     # Repeat tests to mitigate experimental error and compute averages
     print(f"\nRunning benchmarks ({TRIALS} trials per size)...")
+    print(f"Testing vertex counts: 10, 20, ..., {MAX_VERTICES - 10}")
+    print(f"Densities: sparse ({SPARSE_DENSITY*100:.0f}%), dense ({DENSE_DENSITY*100:.0f}%)")
+    print("-" * 60)
     
     with open(OUTPUT, "w") as f:
         f.write("#vertices,density,dj,fw\n")
@@ -88,6 +91,8 @@ def main():
         for n in range(10, MAX_VERTICES, 10):
             # Test both sparse and dense graphs for each vertex count
             for density, density_name in [(SPARSE_DENSITY, "sparse"), (DENSE_DENSITY, "dense")]:
+                dj_times = []
+                fw_times = []
                 
                 for i in range(TRIALS):
                     # Generate a random connected directed graph with given density
@@ -96,16 +101,37 @@ def main():
                     # Time both algorithms
                     dj_time = alg_runtime(G, dj.apsp_length)
                     fw_time = alg_runtime(G, fw.apsp_length)
+                    
+                    dj_times.append(dj_time)
+                    fw_times.append(fw_time)
+                    
+                    # Write results to CSV
+                    f.write(f"{n},{density},{dj_time},{fw_time}\n")
+                
+                # Compute and display average runtime for this configuration
+                dj_avg = sum(dj_times) / TRIALS
+                fw_avg = sum(fw_times) / TRIALS
+                print(f"n={n:3d}, {density_name:6s}: Dijkstra avg={dj_avg:.6f}s, Floyd-Warshall avg={fw_avg:.6f}s")
 
     # this part here is to plot the results on a graph
     df = pd.read_csv(OUTPUT)
 
     # Average over densities for each vertex count
-    avg_df = df.groupby('#vertices')[['dj_avg', 'fw_avg']].mean().reset_index()
+    avg_df = df.groupby('#vertices')[['dj', 'fw']].mean().reset_index()
+    
+    # Print summary table of average runtimes per vertex count
+    print("-" * 60)
+    print("\nSUMMARY: Average Runtime per Vertex Count (across all trials and densities)")
+    print("-" * 60)
+    print(f"{'Vertices':<10} {'Dijkstra (s)':<15} {'Floyd-Warshall (s)':<18}")
+    print("-" * 60)
+    for _, row in avg_df.iterrows():
+        print(f"{int(row['#vertices']):<10} {row['dj']:<15.6f} {row['fw']:<18.6f}")
+    print("-" * 60)
 
     plt.figure(figsize=(8, 5))
-    plt.plot(avg_df['#vertices'], avg_df['dj_avg'], marker='o', label='Dijkstra')
-    plt.plot(avg_df['#vertices'], avg_df['fw_avg'], marker='o', label='Floyd-Warshall')
+    plt.plot(avg_df['#vertices'], avg_df['dj'], marker='o', label='Dijkstra')
+    plt.plot(avg_df['#vertices'], avg_df['fw'], marker='o', label='Floyd-Warshall')
 
     plt.title('APSP Algorithm Runtime Comparison')
     plt.xlabel('Number of Vertices')
@@ -114,6 +140,8 @@ def main():
     plt.grid(True)
     plt.tight_layout()
     plt.savefig('plot.png', bbox_inches='tight')
+    print(f"\nResults saved to: {OUTPUT}")
+    print(f"Plot saved to: plot.png")
 
 if __name__=="__main__":
     main()
