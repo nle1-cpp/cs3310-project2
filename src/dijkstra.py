@@ -13,6 +13,7 @@ from heapq import heappush, heappop
 from math import inf
 import networkx as nx
 
+
 def apsp_length(G: nx.DiGraph):
     """
     All-Pairs Shortest Paths using repeated single-source Dijkstra.

@@ -12,6 +12,7 @@ All shortest-path logic is implemented from scratch.
 import networkx as nx
 from math import inf
 
+
 def apsp_length(G: nx.DiGraph):
     """
     Floyd-Warshall algorithm for All-Pairs Shortest Paths.

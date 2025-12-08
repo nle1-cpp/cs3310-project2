@@ -1,10 +1,22 @@
+"""
+APSP Algorithm Benchmarking
+
+Library Usage (NetworkX - storage and traversal only):
+  - nx.DiGraph: Graph data structure
+  - nx.gnp_random_graph(): Generate random graphs
+  - nx.is_weakly_connected(): Check graph connectivity
+  - G.edges(): Iterate edges to assign weights
+
+No library shortest-path algorithms are used.
+All shortest-path logic is implemented from scratch in dijkstra.py and floyd_warshall.py.
+"""
 import networkx as nx
 import random
 import time
 import sys
 
-# graphing library
-import pandas as pd
+# graphing library 
+import pandas as pd 
 import matplotlib.pyplot as plt
 
 import dijkstra as dj
@@ -17,11 +29,25 @@ SPARSE_DENSITY = 0.15  # 15% edge probability (sparse)
 DENSE_DENSITY = 0.50   # 50% edge probability (dense)
 
 
-def alg_runtime(G, callback):
-    """Measure the runtime of a shortest-path APSP algorithm."""
-    start_time = time.time()
-    callback(G)
-    return time.time() - start_time
+def generate_connected_graph(n, density):
+    """
+    Generate a random directed graph that is weakly connected.
+    Keeps regenerating until a connected graph is produced.
+    """
+    while True:
+        G = nx.gnp_random_graph(n, density, directed=True)
+        if nx.is_weakly_connected(G):
+            # Assign random positive weights to all edges
+            for (u, v) in G.edges():
+                G.edges[u, v]["weight"] = random.randint(1, 10)
+            return G
+
+
+def alg_runtime(G, callback=None):
+    if callback != None:
+        start_time = time.time()
+        callback(G)
+        return time.time() - start_time # may need to convert to ms?
 
 
 def main():
@@ -29,9 +55,7 @@ def main():
     #  Sanity check for Dijkstra's and Floyd–Warshall algorithms
     # ---------------------------------------------------------------
     print("Running sanity check...")
-    G = nx.gnp_random_graph(10, 0.2, directed=True)
-    for (u, v) in G.edges():
-        G.edges[u,v]["weight"] = random.randint(1, 10)
+    G = generate_connected_graph(10, 0.3)
 
     # Call student algorithms
     dj_paths = dj.apsp_length(G)
@@ -66,31 +90,22 @@ def main():
             for density, density_name in [(SPARSE_DENSITY, "sparse"), (DENSE_DENSITY, "dense")]:
                 
                 for i in range(TRIALS):
-                    # Generate a random directed graph with given density
-                    G = nx.gnp_random_graph(n, density, directed=True)
-                    for (u, v) in G.edges():
-                        G.edges[u,v]["weight"] = random.randint(1, 10)
+                    # Generate a random connected directed graph with given density
+                    G = generate_connected_graph(n, density)
 
                     # Time both algorithms
                     dj_time = alg_runtime(G, dj.apsp_length)
                     fw_time = alg_runtime(G, fw.apsp_length)
 
-                    # Write results
-                    f.write(f"{n},{density_name},{dj_time},{fw_time}\n")
-
-    # ---------------------------------------------------------------
-    #  Print out runtime.csv
-    # ---------------------------------------------------------------
-    print("\nRuntime results from runtime.csv:")
-    df = pd.read_csv(OUTPUT)
-    print(df)
-
     # this part here is to plot the results on a graph
-    avg_df = df.groupby('#vertices')[['dj','fw']].mean().reset_index()
+    df = pd.read_csv(OUTPUT)
+
+    # Average over densities for each vertex count
+    avg_df = df.groupby('#vertices')[['dj_avg', 'fw_avg']].mean().reset_index()
 
     plt.figure(figsize=(8, 5))
-    plt.plot(avg_df['#vertices'], avg_df['dj'], marker='o', label='Dijkstra')
-    plt.plot(avg_df['#vertices'], avg_df['fw'], marker='o', label='Floyd-Warshall')
+    plt.plot(avg_df['#vertices'], avg_df['dj_avg'], marker='o', label='Dijkstra')
+    plt.plot(avg_df['#vertices'], avg_df['fw_avg'], marker='o', label='Floyd-Warshall')
 
     plt.title('APSP Algorithm Runtime Comparison')
     plt.xlabel('Number of Vertices')
@@ -100,6 +115,5 @@ def main():
     plt.tight_layout()
     plt.savefig('plot.png', bbox_inches='tight')
 
-
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
