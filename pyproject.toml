@@ -1,0 +1,17 @@
+[project]
+name = 'apsp'
+version = '0.1.0'
+dependencies = [ 
+	"networkx[default]",
+	"matplotlib",
+	"pandas",
+	"setuptools",
+	"pyinstaller",
+	"pynput"
+]
+
+[project.scripts]
+build = "build:install"
+
+[tool.setuptools]
+package-dir = {"" = "."}

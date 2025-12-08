@@ -6,3 +6,8 @@ __pycache__
 pyrightconfig.json
 *.csv
 *.exe
+build/
+*.egg-info
+main.spec
+dist/
+apsp
