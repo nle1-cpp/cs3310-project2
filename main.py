@@ -1,3 +1,15 @@
+"""
+APSP Algorithm Benchmarking
+
+Library Usage (NetworkX - storage and traversal only):
+  - nx.DiGraph: Graph data structure
+  - nx.gnp_random_graph(): Generate random graphs
+  - nx.is_weakly_connected(): Check graph connectivity
+  - G.edges(): Iterate edges to assign weights
+
+No library shortest-path algorithms are used.
+All shortest-path logic is implemented from scratch in dijkstra.py and floyd_warshall.py.
+"""
 import networkx as nx
 import random
 import time
@@ -12,6 +24,21 @@ TRIALS = 5
 SPARSE_DENSITY = 0.15  # 15% edge probability (sparse)
 DENSE_DENSITY = 0.50   # 50% edge probability (dense)
 
+
+def generate_connected_graph(n, density):
+    """
+    Generate a random directed graph that is weakly connected.
+    Keeps regenerating until a connected graph is produced.
+    """
+    while True:
+        G = nx.gnp_random_graph(n, density, directed=True)
+        if nx.is_weakly_connected(G):
+            # Assign random positive weights to all edges
+            for (u, v) in G.edges():
+                G.edges[u, v]["weight"] = random.randint(1, 10)
+            return G
+
+
 def alg_runtime(G, callback=None):
     if callback != None:
         start_time = time.time()
@@ -22,9 +49,7 @@ def alg_runtime(G, callback=None):
 def main():
     # Sanity check: compare Dijkstra's vs Floyd-Warshall (should produce identical results)
     print("Running sanity check...")
-    G = nx.gnp_random_graph(10, 0.2, directed=True)
-    for (u, v) in G.edges():
-        G.edges[u,v]["weight"] = random.randint(1, 10)
+    G = generate_connected_graph(10, 0.3)
 
     dj_paths = dj.apsp_length(G)
     fw_paths = fw.apsp_length(G)
@@ -60,10 +85,8 @@ def main():
                 fw_total = 0
                 
                 for i in range(TRIALS):
-                    # Generate a random directed graph with given density
-                    G = nx.gnp_random_graph(n, density, directed=True)
-                    for (u, v) in G.edges():
-                        G.edges[u,v]["weight"] = random.randint(1, 10)
+                    # Generate a random connected directed graph with given density
+                    G = generate_connected_graph(n, density)
 
                     # Accumulate runtime for each algorithm
                     dj_total += alg_runtime(G, dj.apsp_length)
